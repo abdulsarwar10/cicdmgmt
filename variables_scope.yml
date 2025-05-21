@@ -1,0 +1,64 @@
+# .github/workflows/variables_scope.yml
+
+name: Variable Scope Demonstration
+
+# Define a workflow-level variable
+env:
+  MY_WORKFLOW_VARIABLE: "This is a workflow-level variable"
+
+on: [push, workflow_dispatch] # Trigger on push or manually
+
+jobs:
+  my_first_job:
+    runs-on: ubuntu-latest
+
+    # Define a job-level variable for 'my_first_job'
+    env:
+      MY_JOB_VARIABLE: "This is a job-level variable for my_first_job"
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Display workflow-level variable in job 1
+        run: echo "Workflow Variable (in Job 1): ${{ env.MY_WORKFLOW_VARIABLE }}"
+
+      - name: Display job-level variable in job 1
+        run: echo "Job Variable (in Job 1): ${{ env.MY_JOB_VARIABLE }}"
+
+      - name: Define and display step-level variable in job 1
+        # Define a step-level variable
+        env:
+          MY_STEP_VARIABLE: "This is a step-level variable for step 1 in job 1"
+        run: |
+          echo "Step Variable (in Job 1, Step 1): ${{ env.MY_STEP_VARIABLE }}"
+          echo "Workflow Variable (in Job 1, Step 1 - also accessible): ${{ env.MY_WORKFLOW_VARIABLE }}"
+          echo "Job Variable (in Job 1, Step 1 - also accessible): ${{ env.MY_JOB_VARIABLE }}"
+
+      - name: Attempt to access step-level variable from previous step (will be empty)
+        run: echo "Attempting to access previous step's variable: ${{ env.MY_STEP_VARIABLE || 'N/A - not accessible' }}"
+
+  my_second_job:
+    runs-on: ubuntu-latest
+    needs: my_first_job # This job will run after my_first_job completes
+
+    # Define a job-level variable for 'my_second_job'
+    env:
+      MY_JOB_VARIABLE: "This is a job-level variable for my_second_job"
+      ANOTHER_JOB_VARIABLE: "Another job-level variable unique to job 2"
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Display workflow-level variable in job 2
+        run: echo "Workflow Variable (in Job 2): ${{ env.MY_WORKFLOW_VARIABLE }}"
+
+      - name: Display job-level variable in job 2
+        run: echo "Job Variable (in Job 2): ${{ env.MY_JOB_VARIABLE }}"
+
+      - name: Attempt to access job-level variable from my_first_job (will show job 2's value)
+        run: echo "Attempting to access job 1's variable from job 2 (will show job 2's): ${{ env.MY_JOB_VARIABLE }}"
+
+      - name: Display a variable unique to job 2
+        run: echo "Unique Job 2 Variable: ${{ env.ANOTHER_JOB_VARIABLE }}"
